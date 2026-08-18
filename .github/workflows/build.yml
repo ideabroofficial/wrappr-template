@@ -35,6 +35,15 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true
+
+      - name: Auto-Patch Kotlin & Gradle Version
+        run: |
+          echo "Upgrading Kotlin version across all gradle files..."
+          # Update Kotlin version in settings.gradle / settings.gradle.kts
+          find android/ -type f \( -name "settings.gradle.kts" -o -name "settings.gradle" -o -name "build.gradle.kts" -o -name "build.gradle" \) -exec sed -i -E 's/org.jetbrains.kotlin.android" version "[0-9.]+"/org.jetbrains.kotlin.android" version "2.2.20"/g' {} +
+          find android/ -type f \( -name "settings.gradle.kts" -o -name "settings.gradle" -o -name "build.gradle.kts" -o -name "build.gradle" \) -exec sed -i -E 's/kotlin\("jvm"\) version "[0-9.]+"/kotlin("jvm") version "2.2.20"/g' {} +
+          find android/ -type f \( -name "settings.gradle.kts" -o -name "settings.gradle" -o -name "build.gradle.kts" -o -name "build.gradle" \) -exec sed -i -E 's/ext.kotlin_version = .*/ext.kotlin_version = '\''2.2.20'\''/g' {} +
 
       - name: Install Dependencies
         run: flutter pub get
