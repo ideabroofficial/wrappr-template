@@ -1,22 +1,89 @@
-          name: Build Android APK
+name: Build Android APK
 
 on:
   workflow_dispatch:
     inputs:
+      app_id:
+        description: 'App ID'
+        required: false
+        default: '1'
       app_name:
         description: 'App Display Name'
         required: true
         default: 'Wrappr App'
-      app_url:
+      package_name:
+        description: 'Package Name'
+        required: true
+        default: 'com.company.app'
+      website_url:
         description: 'Website Target URL'
         required: true
         default: 'https://google.com'
+      version_code:
+        description: 'Version Code'
+        required: false
+        default: '1'
+      version_name:
+        description: 'Version Name'
+        required: false
+        default: '1.0.0'
+      app_type:
+        description: 'App Type'
+        required: false
+        default: 'android'
+      android_output:
+        description: 'Android Output (apk/aab)'
+        required: false
+        default: 'apk'
+      pull_to_refresh:
+        description: 'Enable Pull To Refresh'
+        required: false
+        default: 'false'
+      onesignal_app_id:
+        description: 'OneSignal App ID'
+        required: false
+        default: ''
+      onesignal_rest_key:
+        description: 'OneSignal REST API Key'
+        required: false
+        default: ''
+      permissions:
+        description: 'Permissions JSON'
+        required: false
+        default: '[]'
+      ad_networks:
+        description: 'AdMob Settings JSON'
+        required: false
+        default: '{}'
+      app_icon_url:
+        description: 'App Icon URL'
+        required: false
+        default: ''
+      splash_screen_url:
+        description: 'Splash Screen URL'
+        required: false
+        default: ''
+      no_internet_screen_url:
+        description: 'No Internet Screen URL'
+        required: false
+        default: ''
+      keystore_url:
+        description: 'Android Keystore URL'
+        required: false
+        default: ''
+      ios_provisioning_url:
+        description: 'iOS Provisioning Profile URL'
+        required: false
+        default: ''
+      ios_certificate_url:
+        description: 'iOS Certificate URL'
+        required: false
+        default: ''
 
 jobs:
   build-apk:
     name: Generate Flutter Release APK
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -32,28 +99,29 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
-      - name: Set up Flutter
+      - name: Set up Stable Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.0'
+          flutter-version: '3.24.5'
           channel: 'stable'
           cache: true
-
-      - name: Patch Kotlin Version
-        run: |
-          sed -i 's/2.1.0/2.2.20/g' android/settings.gradle.kts || true
-          sed -i 's/2.1.0/2.2.20/g' android/app/build.gradle.kts || true
-          sed -i 's/2.1.0/2.2.20/g' android/build.gradle || true
 
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Android Release APK
-        run: flutter build apk --release --android-skip-build-dependency-validation
+      - name: Build Android Output
+        run: |
+          if [ "${{ github.event.inputs.android_output }}" = "aab" ]; then
+            flutter build appbundle --release --android-skip-build-dependency-validation
+          else
+            flutter build apk --release --android-skip-build-dependency-validation
+          fi
 
-      - name: Upload Generated APK Artifact
+      - name: Upload Generated Output Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event.inputs.app_name }}-Release-APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: ${{ github.event.inputs.app_name }}-Release-Build
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
           retention-days: 7
